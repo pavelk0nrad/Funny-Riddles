@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import GetRiddleButton from './GetRiddleButton';
 import RiddleDisplay from './RiddleDisplay';
-import Header from './Header'; 
 
 const RiddleList = () => {
   const [riddles, setRiddles] = useState([]);
   const [currentRiddle, setCurrentRiddle] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const fetchRiddles = async () => {
@@ -17,8 +17,12 @@ const RiddleList = () => {
         }
         const data = await response.json();
         setRiddles(data.riddles);
+        setLoadError(false); // Reset load error state on successful fetch
       } catch (error) {
         console.error('Error fetching riddles:', error);
+        setLoadError(true); // Set load error state on fetch error
+        // Retry fetching after a delay (e.g., 5 seconds)
+        setTimeout(fetchRiddles, 5000);
       }
     };
 
@@ -39,13 +43,13 @@ const RiddleList = () => {
 
   const handleCloseModal = () => {
     setSelectedOption(null);
-    loadRiddle(); // Načtení nového riddle při zavření modálního okna
+    loadRiddle(); // Load new riddle on modal close
   };
 
   return (
     <div>
-     
-      {!currentRiddle && <GetRiddleButton onClick={loadRiddle} />}
+   
+      {!currentRiddle && !loadError && <GetRiddleButton onClick={loadRiddle} />}
       {currentRiddle && (
         <RiddleDisplay
           riddle={currentRiddle}
@@ -54,6 +58,7 @@ const RiddleList = () => {
           onCloseModal={handleCloseModal}
         />
       )}
+      {loadError && <p>Failed to load riddles. Retrying...</p>}
     </div>
   );
 };
